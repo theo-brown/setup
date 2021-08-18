@@ -84,6 +84,8 @@ do
                         ;;
                 esac
             done
+            
+            break
             ;;
         [nN])
             break
