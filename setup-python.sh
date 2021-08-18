@@ -68,6 +68,7 @@ do
             
             while true
             do
+                echo
                 read -rp "Set Python $DEFAULT_PYTHON_VERSION as default local Python version? [y/n]: " input2
                 case $input2 in
                     [yY])              
@@ -97,7 +98,10 @@ do
 done
 
 # Install pip for this pyenv version
+echo
+echo "Installing pip in pyenv..."
 curl https://bootstrap.pypa.io/get-pip.py | pyenv exec python
+echo "Done"
 
 # Print help info
 echo
