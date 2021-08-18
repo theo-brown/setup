@@ -109,7 +109,7 @@ echo "To list installable Python versions, run:"
 echo " pyenv install -l"
 echo "To install a Python version run:"
 echo " pyenv install <version>"
-echo "To create a venv using a pyenv-installed Python version, run:"
-echo " pyenv virtualenv <version> <venv-name>"
+echo "To create a venv using the current pyenv Python version, run:"
+echo " pyenv exec python -m venv <venv-name>"
 
 cd $START_DIR
