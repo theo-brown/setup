@@ -20,6 +20,8 @@ function install_pyenv () {
     echo 'eval "$(pyenv init -)"' >> $HOME/.bashrc
     echo 'eval "$(pyenv virtualenv-init -)"' >> $HOME/.bashrc
     
+    source $HOME/.bashrc
+    
     echo "Done."
 }
 
