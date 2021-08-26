@@ -6,7 +6,7 @@ cd $HOME
 # Install Python build dependencies
 apt install -y make build-essential libssl-dev zlib1g-dev \
 libbz2-dev libreadline-dev libsqlite3-dev wget curl llvm libncurses5-dev \
-libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev python-openssl git
+libncursesw5-dev xz-utils tk-dev libffi-dev liblzma-dev git
 
 # Define function to set up pyenv
 function install_pyenv () {
@@ -19,8 +19,6 @@ function install_pyenv () {
     echo 'export PATH="$HOME/.pyenv/bin:$PATH"' >> $HOME/.bashrc
     echo 'eval "$(pyenv init -)"' >> $HOME/.bashrc
     echo 'eval "$(pyenv virtualenv-init -)"' >> $HOME/.bashrc
-    
-    source $HOME/.bashrc
     
     echo "Done."
 }
@@ -55,6 +53,10 @@ then
 else
     echo "No existing pyenv found at $HOME/.pyenv."
     install_pyenv
+    export PATH="$HOME/.pyenv/bin:$PATH"
+    eval "$(pyenv init -)"
+    eval "$(pyenv virtualenv-init -)"
+
 fi
 
 # Install Python
