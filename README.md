@@ -1,2 +1,2 @@
 # setup
-Set up a Linux system the way I like it
+Various admin scripts to set up programs on a Linux system
