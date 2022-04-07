@@ -6,22 +6,23 @@ LOCAL_DIR="$HOME/.miniconda3"
 
 
 function install_miniconda() {
-    echo "Downloading miniconda...."
-    curl -# $MINICONDA_URL -o miniconda_install.sh
-    # Install conda in silent mode
-    # Auto-agrees to license agreement
-    # Leaves shell scripts alone
-    bash miniconda_install.sh -b -p $MINICONDA_DIR
-    rm miniconda_install.sh
+    echo "Downloading miniconda..."
+    curl -L -# $MINICONDA_URL -o miniconda-install.sh
 
-    # Get the location of the user's .bashrc
-    # This method works whether the user is sudo or not
-    BASHRC=$(getent passwd ${SUDO_USER:-$USER} | cut -d: -f6)/.bashrc
-    echo "Adding conda to $BASHRC..."
-    echo "" >> $BASHRC
-    echo "# Conda setup, created by theo-brown's setup-conda.sh script on $(date)" >> $BASHRC
-    echo "export PATH=\$PATH:$MINICONDA_DIR/bin" >> $BASHRC
+    echo "Installing miniconda..."
+    bash miniconda-install.sh -b -p $MINICONDA_DIR
+
+    rm miniconda-install.sh
     export PATH=$PATH:$MINICONDA_DIR/bin
+
+    echo "Updating .rc files..."
+    if [[ INSTALL_TYPE == 'g' ]]
+    then
+        sudo -u "$SUDO_USER" sh -c "conda init"
+    else
+        conda init
+    fi
+    echo "auto_activate_base: false" >> $MINICONDA_DIR/.condarc
 
     echo "Updating conda..."
     conda update -y conda
