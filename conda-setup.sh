@@ -14,13 +14,13 @@ function install_miniconda() {
     bash miniconda_install.sh -b -p $MINICONDA_DIR
     rm miniconda_install.sh
 
-    # Get the location of the user's .profile
+    # Get the location of the user's .bashrc
     # This method works whether the user is sudo or not
-    PROFILE=$(getent passwd ${SUDO_USER:-$USER} | cut -d: -f6)/.profile
-    echo "Adding conda to $PROFILE..."
-    echo "" >> $PROFILE
-    echo "# Conda setup, created by theo-brown's setup-conda.sh script on $(date)" >> $PROFILE
-    echo "export PATH=\$PATH:$MINICONDA_DIR/bin" >> $PROFILE
+    BASHRC=$(getent passwd ${SUDO_USER:-$USER} | cut -d: -f6)/.bashrc
+    echo "Adding conda to $BASHRC..."
+    echo "" >> $BASHRC
+    echo "# Conda setup, created by theo-brown's setup-conda.sh script on $(date)" >> $BASHRC
+    echo "export PATH=\$PATH:$MINICONDA_DIR/bin" >> $BASHRC
     export PATH=$PATH:$MINICONDA_DIR/bin
 
     echo "Updating conda..."
