@@ -110,7 +110,7 @@ fi
 
 echo
 echo "Successfully installed conda to $INSTALL_DIRECTORY"
-echo "If you ran without the -m flag, you can ignore any messages about restarting the shell for changes to take effect"
+echo "You'll need to restart the shell to be able to activate environments"
 echo
 echo "Create your first environment with 'conda create -n myenv'"
 echo "Activate an environment with 'conda activate myenv'"
