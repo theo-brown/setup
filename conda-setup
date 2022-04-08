@@ -1,111 +1,158 @@
 #!/bin/bash
 # Copyright (c) 2022 Theo Brown
+function help() {
+    echo "Configurable Miniconda installation script"
+    echo "By default, installs conda locally to ~/.miniconda3 and runs 'conda init' to enable conda in your shell."
+    echo
+    echo "Usage:"
+    echo "conda-setup [-B | --hide-base] [-f | --force] [-g | --global] [-h | --help] [-i | --interactive]"
+    echo "            [-s | --silent] [--no-auto-activate] [--no-init]"
+    echo "            [-d INSTALL_DIRECTORY | --install-dir INSTALL_DIRECTORY]"
+    echo "            [-p PYTHON_VERSION | --python-version PYTHON_VERSION]"
+    echo
+    echo "Options:"
+    echo "-B | --hide-base          Hide (base) in shell prompt - for non-base environments it will still appear"
+    echo "-f | --force              Force removal of any existing conda installation"
+    echo "-g | --global             Install conda system-wide, equivalent to 'conda-setup -d /opt'"
+    echo "-h | --help               Print this help"
+    echo "-i | --interactive        Currently not supported"
+    echo "-s | --silent             Silent mode (suppress all output)"
+    echo
+    echo "--no-auto-activate        Disable automatic activation of base environment"
+    echo "--no-init                 Don't run 'conda init' after installation"
+    echo
+    echo "-d INSTALL_DIRECTORY | --install-dir INSTALL_DIRECTORY"
+    echo "   Install conda to the given location; it will be found at \$INSTALL_DIRECTORY/miniconda"
+    echo "-p PYTHON_VERSION | --python PYTHON_VERSION"
+    echo "   Install the specified version of Python (default: Miniconda's default Python version)"
+}
+
+# Set defaults
+MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
+HIDE_BASE=false
+FORCE_INSTALL=false
+AUTO_ACTIVATE=true
+RUN_INIT=true
+INSTALL_DIRECTORY="$HOME/.miniconda3"
+PYTHON_VERSION=""
+
+# Exit when any command fails
+set -e
+
+# Parse arguments by iterating through array
+while [ "$1" != "" ]
+do
+    case $1 in
+        -B | --hide-base) HIDE_BASE=true;;
+        -f | --force) FORCE_INSTALL=true;;
+        -g | --global) INSTALL_DIRECTORY="/opt/miniconda3";;
+        -h | --help) help; exit 0;;
+        -i | --interactive) echo "Not implemented yet."; exit 1;;
+        -s | --silent) exec &>/dev/null;;
+        --no-auto-activate) AUTO_ACTIVATE=false;;
+        --no-init) RUN_INIT=false;;
+        -d | --install-dir) shift; INSTALL_DIRECTORY="$1/miniconda3";;
+        -p | --python-version) shift; PYTHON_VERSION="$1";;
+        *) echo "Unexpected argument $1"; exit 2;;
+    esac
+    shift
+done
 
 echo "################################"
 echo "# theo-brown's conda installer #"
 echo "################################"
 
-function help() {
-    echo "Configurable Miniconda installation script"
-    echo
-    echo "Usage: conda-setup [-f] [-h] [-m] [-S] [-d INSTALL_DIRECTORY] [-p PYTHON_VERSION]"
-    echo
-    echo "By default this script:"
-    echo " - Installs conda locally to ~/.miniconda"
-    echo " - Installs Python 3.10"
-    echo " - Runs 'conda init', which changes your .bashrc so that conda is fully set up"
-    echo
-    echo "Options:"
-    echo "-f                   Force overwrite if a conflicting installation is found at $INSTALL_DIRECTORY"
-    echo "-h                   Print this help"
-    echo "-m                   Manual configuration mode - disables automatic editing of config files"
-    echo "-S                   Install conda systemwide, equivalent to 'conda-setup -d /opt'"
-    echo "-d INSTALL_DIRECTORY Install conda to the location given by INSTALL_DIRECTORY."
-    echo "                      The installation will be found at \$INSTALL_DIRECTORY/miniconda"
-    echo "-p PYTHON_VERSION    Install the version of Python specified by PYTHON_VERSION (default: 3.10)"
-}
-
-# Set defaults
-MINICONDA_URL="https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh"
-FORCE_OVERWRITE=false
-MANUAL_CONFIGURATION=false
-INSTALL_DIRECTORY="$HOME/.miniconda"
-PYTHON_VERSION="3.10"
-
-# Exit when any command fails
-set -e
-
-# Parse options
-while getopts :fhmSd:p: options;
-do
-    case $options in
-        f) FORCE_OVERWRITE=true;;
-        h) help; exit 0;;
-        m) MANUAL_CONFIGURATION=true;;
-        S) INSTALL_DIRECTORY="/opt/miniconda";;
-        d) INSTALL_DIRECTORY="$OPTARG/miniconda";;
-        p) PYTHON_VERSION="$OPTARG";;
-        \?) echo "Unrecognised argument -$OPTARG"; exit 1;;
-    esac
-done
-
+# Optionally wipe any existing install
+if $FORCE_INSTALL
+then
+    # If conda is installed
+    if command -v conda &> /dev/null
+    then
+        # Find it and delete it
+        OLD_CONDA_LOCATION="$(dirname "$(dirname "$(which conda)")")"
+        echo "Deleting conda install found at $OLD_CONDA_LOCATION..."
+        rm -rf "$OLD_CONDA_LOCATION"
+    fi
+fi
 # Check whether the specified INSTALL_DIRECTORY exists
 if [[ -d $INSTALL_DIRECTORY ]]
 then
-    if $FORCE_OVERWRITE
+    if $FORCE_INSTALL
     then
-        rm -rf $INSTALL_DIRECTORY
+        rm -rf "$INSTALL_DIRECTORY"
     else
         echo "Error installing to $INSTALL_DIRECTORY: directory already exists."
-        exit 2
+        exit 3
     fi
 fi
 # Check whether we have permission to create the specified INSTALL_DIRECTORY
-if [ ! -w "$(dirname $INSTALL_DIRECTORY)" ]
+if [ ! -w "$(dirname "$INSTALL_DIRECTORY")" ]
 then
     echo "Error installing to $INSTALL_DIRECTORY: permission denied."
-    exit 3
+    exit 4
 fi
 # Check if the Python version is valid (up to three numbers separated by .)
-PYTHON_VERSION_REGEX='^[0-9]+(\.[0-9]+){,2}$'
-if [[ ! "$PYTHON_VERSION" =~ $PYTHON_VERSION_REGEX ]]
+if [ -n "$PYTHON_VERSION" ]
 then
-   echo "Unrecognised Python version format $PYTHON_VERSION"
-   exit 4
+  PYTHON_VERSION_REGEX='^[0-9]+(\.[0-9]+){,2}$'
+  if [[ ! "$PYTHON_VERSION" =~ $PYTHON_VERSION_REGEX ]]
+  then
+     echo "Unrecognised Python version format $PYTHON_VERSION"
+     exit 5
+  fi
 fi
-
-echo
-echo "Installing Miniconda to $INSTALL_DIRECTORY"
-echo "Installing Python $PYTHON_VERSION"
-echo "Overwrite existing install: $FORCE_OVERWRITE"
-echo "Manual configuration: $MANUAL_CONFIGURATION"
-echo
 
 # Download and install
 echo "Downloading miniconda..."
-curl -L -# $MINICONDA_URL -o miniconda-install.sh
+if [ -f /tmp/miniconda-installer.sh ]
+then
+    echo "Miniconda already downloaded at /tmp/miniconda-installer.sh"
+else
+    curl -L -# $MINICONDA_URL -o /tmp/miniconda-installer.sh
+fi
 
-echo "Installing miniconda..."
-bash miniconda-install.sh -b -p $INSTALL_DIRECTORY
-rm miniconda-install.sh
+echo "Installing miniconda to $INSTALL_DIRECTORY..."
+bash /tmp/miniconda-installer.sh -b -p "$INSTALL_DIRECTORY"
 
+# Save conda to PATH for the duration of this script
 export PATH=$PATH:$INSTALL_DIRECTORY/bin
+
+# Update conda
 echo "Updating conda..."
 conda update -y conda
-echo "Installing Python..."
-conda install -y python=$PYTHON_VERSION
 
-if ! $MANUAL_CONFIGURATION
+# Install Python
+echo "Installing Python..."
+if [ -n "$PYTHON_VERSION" ]
 then
-    echo "Updating .rc files..."
-    # Run 'conda init' as the active user
-    if [ -z $SUDO_USER ]
+  conda install -y python="$PYTHON_VERSION"
+else
+  conda install -y python
+fi
+
+# Optionally run 'conda init' as the active user
+if $RUN_INIT
+then
+    echo "Running 'conda init'..."
+    if [ -z "$SUDO_USER" ]
     then
         conda init
     else
         sudo -u "$SUDO_USER" sh -c "$INSTALL_DIRECTORY/bin/conda init"
     fi
-    echo "auto_activate_base: false" >> $INSTALL_DIRECTORY/.condarc
+fi
+
+# Optionally disable auto activation of the base environment
+if ! $AUTO_ACTIVATE
+then
+    echo "auto_activate_base: false" >> "$INSTALL_DIRECTORY"/.condarc
+fi
+
+# Optionally disable the '(base) ' prefix to PS1 prompt
+if $HIDE_BASE
+then
+    mkdir -p "$INSTALL_DIRECTORY"/etc/conda/activate.d
+    echo 'PS1="$(echo "$PS1" | sed '\''s/(base) //'\'')"' > "$INSTALL_DIRECTORY"/etc/conda/activate.d/hide_base_ps1.sh
 fi
 
 echo
