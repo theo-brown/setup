@@ -1,5 +1,6 @@
 #!/bin/bash
 # Copyright (c) 2022 Theo Brown
+
 function help() {
     echo "Configurable Miniconda installation script"
     echo "By default, installs conda locally to ~/.miniconda3 and runs 'conda init' to enable conda in your shell."
@@ -74,9 +75,11 @@ then
         rm -rf "$OLD_CONDA_LOCATION"
     fi
 fi
+
 # Check whether the specified INSTALL_DIRECTORY exists
 if [[ -d $INSTALL_DIRECTORY ]]
 then
+    # Overwrite it if FORCE_INSTALL is true
     if $FORCE_INSTALL
     then
         rm -rf "$INSTALL_DIRECTORY"
@@ -85,12 +88,14 @@ then
         exit 3
     fi
 fi
+
 # Check whether we have permission to create the specified INSTALL_DIRECTORY
 if [ ! -w "$(dirname "$INSTALL_DIRECTORY")" ]
 then
     echo "Error installing to $INSTALL_DIRECTORY: permission denied."
     exit 4
 fi
+
 # Check if the Python version is valid (up to three numbers separated by .)
 if [ -n "$PYTHON_VERSION" ]
 then
